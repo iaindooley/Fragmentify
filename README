@@ -1,0 +1,72 @@
+each document must contain one root node (html) with an optional "base"
+attribute
+if the "base" attribute is present, then the specified file will be processed
+first, then each child of the root node containing one of the following
+attributes:
+
+    replace, append, prepend, before, after, surround, merge
+
+will be inserted into a copy of the base document, in a manner determined by
+which attribute is used. The value of the attribute should be an xpath
+targetting the node in the base document to be replaced etc. If multiple nodes
+are targeted the action will be performed for each of them.
+
+replace:
+    Replace the matched node with this one.
+    The "keep-contents" attribute can be set to "true" to indicate that the
+    contents of the original node should be appended to this node after
+    replacement.
+append:
+    Insert this node at the end of the matched node.
+prepend:
+    Insert this node at the start of the matched node.
+before:
+    Insert this node before the matched node.
+after:
+    Insert this node after the matched node.
+surround:
+    Insert this node as a sibling of the matched node then move the matched node
+    into this node.
+    The "where" attribute can be set to "top" or "bottom" to indicate if the
+    target node should be placed before or after the contents of this node (if
+    any).
+    If the "where" attribute is omitted the target node will be placed after the
+    contents of this node.
+merge:
+    Copy the attributes of this node onto the target node, replacing any
+    existing attributes. The contents of this node are ignored.
+remove:
+    Remove the targetted node. The type, attributes and contents of this node
+    are ignored.
+
+directives are processed in order, and the results of an earlier directive can
+be targetted by a later directive, for example:
+
+base.html:
+<html>
+    <body>
+        <div id="master">...</div>
+    </body>
+</html>
+
+override.html:
+<html base="base.html">
+    <div id="wrap" surround="//*[@id='master']"></div>
+    <div id="wrap-moar" surround="//*[@id='wrap']"></div>
+</html>
+
+result for override.html:
+<html>
+    <body>
+        <div id="wrap-moar">
+            <div id="wrap">
+                <div id="master">...</div>
+            </div>
+        </div>
+    </body>
+</html>
+
+thus it follows that you cannot replace a node then later target the replaced
+node
+
+see the contents of the sample/ directory for examples
