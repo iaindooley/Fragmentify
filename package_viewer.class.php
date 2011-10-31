@@ -9,11 +9,16 @@
             if(!$package = Args::get('package',$_GET))
                 die('You need to include the name of a package in the query string like package=my_package');
             else if(!is_dir(PACKAGES_DIR.'/'.$package))
-                die($package.' does not exist');
+                die(PACKAGES_DIR.'/'.$package.' does not exist');
             
             if($file = Args::get('file',$_GET))
             {
-                echo Fragmentify::render($file);
+                $realpackages = realpath(PACKAGES_DIR);
+                $realfile     = realpath($file);
+                
+                if(strpos($realfile,$realpackages) === 0)
+                    echo Fragmentify::render($file);
+
                 exit(1);
             }
             
