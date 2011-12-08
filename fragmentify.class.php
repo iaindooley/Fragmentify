@@ -44,8 +44,12 @@
                 $x = $this->getXPath();
                 $reqs = $x->query('//*[@require]');
                 
+                //hacking this in here because its not getting passed in as an
+                //arg any more
+                $rootdir = realpath('./src');
                 foreach($reqs as $req)
-                    $this->processRequire($rootdir,$req,$processed);
+                    //$this->processRequire($rootdir,$req,$processed);
+                    $this->processRequire($rootdir,$req);
             }
         }
 
@@ -241,13 +245,16 @@
             }
         }
 
-        public function processRequire($rootdir, $req, $processed) {
+        //public function processRequire($rootdir, $req, $processed) {
+        public function processRequire($rootdir, $req) {
             $fn = $rootdir.'/'.$req->getAttribute('require');
             $query = $req->getAttribute('xpath');
             if($query === '') {
                 $query = '//fragment/node()';
             }
-            $x = $processed[$fn]->getXPath();
+            //$x = $processed[$fn]->getXPath();
+            $f = new Fragmentify($fn);
+            $x = $f->getXPath();
             $to_import = $x->query($query);
             if(!$to_import->length) {
                 error_log('selector "'.$query.'" in '.$this->path.' for '.
