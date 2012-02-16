@@ -6,12 +6,12 @@
     {
         public function run()
         {
-            if(!$package = Args::get('package',$_GET))
+            if(!$package = Args::get('package',$_GET,Args::argv))
                 die('You need to include the name of a package in the query string like package=my_package');
             else if(!is_dir(PACKAGES_DIR.'/'.$package))
                 die(PACKAGES_DIR.'/'.$package.' does not exist');
             
-            if($file = Args::get('file',$_GET))
+            if($file = Args::get('file',$_GET,Args::argv))
             {
                 $realpackages = realpath(PACKAGES_DIR);
                 $realfile     = realpath($file);
@@ -32,12 +32,61 @@
                 while ($ul->item(0)->hasChildNodes())
                     $ul->item(0)->removeChild($ul->item(0)->childNodes->item(0));
 
-                foreach(explode(PHP_EOL,trim(shell_exec('find '.PACKAGES_DIR.'/'.$package.' -name "*.html"'))) as $fn)
-                    $ul->item(0)->appendChild($this->createLi($package,$fn,$li));
+                foreach(self::directoryList(PACKAGES_DIR.'/'.$package) as $fn)
+                {
+                    if(self::endsWith($fn,'.html'))
+                        $ul->item(0)->appendChild($this->createLi($package,$fn,$li));
+                }
                 
                 echo $doc->saveXML();
             }
         }
+        
+        
+        public static function endsWith($str,$test)
+        {
+            return (substr($str, -strlen($test)) == $test);
+        }
+
+        /**
+        * Courtesy of donovan dot pp at gmail dot com on http://au2.php.net/scandir
+        */
+        public static function directoryList($dir)
+        {
+           $path = '';
+           $stack[] = $dir;
+    
+           while ($stack)
+           {
+               $thisdir = array_pop($stack);
+    
+               if($dircont = scandir($thisdir))
+               {
+                   $i=0;
+    
+                   while(isset($dircont[$i]))
+                   {
+                       if($dircont[$i] !== '.' && $dircont[$i] !== '..')
+                       {
+                           $current_file = "{$thisdir}/{$dircont[$i]}";
+    
+                           if (is_file($current_file))
+                               $path[] = "{$thisdir}/{$dircont[$i]}";
+                           else if(is_dir($current_file))
+                           {
+                               $path[] = "{$thisdir}/{$dircont[$i]}";
+                               $stack[] = $current_file;
+                           }
+                       }
+    
+                       $i++;
+                   }
+               }
+           }
+    
+           return $path;
+        }
+
         
         public function createLi($package,$fn,$tpl)
         {
