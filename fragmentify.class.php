@@ -46,7 +46,9 @@
                 
                 //hacking this in here because its not getting passed in as an
                 //arg any more
-                $rootdir = realpath('./src');
+                //$rootdir = realpath('./src');
+                $rootdir = dirname($this->path);
+                
                 foreach($reqs as $req)
                     //$this->processRequire($rootdir,$req,$processed);
                     $this->processRequire($rootdir,$req);
