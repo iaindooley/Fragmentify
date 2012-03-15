@@ -190,7 +190,6 @@
             if($this->doc == null) {
                 $this->doc = new DomDocument();
                 $data = file_get_contents($this->path);
-                $data = str_replace('&','&amp;',$data);
                 $this->doc->loadXML($data);
             }
             return $this->doc;
