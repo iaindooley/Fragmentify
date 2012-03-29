@@ -246,26 +246,39 @@
             }
         }
 
-        //public function processRequire($rootdir, $req, $processed) {
-        public function processRequire($rootdir, $req) {
+        public function processRequire($rootdir, $req)
+        {
             $fn = $rootdir.'/'.$req->getAttribute('require');
             $query = $req->getAttribute('xpath');
-            if($query === '') {
+            
+            if($query === '')
                 $query = '//fragment/node()';
-            }
-            //$x = $processed[$fn]->getXPath();
+           
             $f = new Fragmentify($fn);
             $x = $f->getXPath();
+
+            $reqs = $x->query('//*[@require]');
+
+            $subrootdir = dirname($f->path);
+
+            foreach($reqs as $subreq)
+                $f->processRequire($subrootdir,$subreq);
+
             $to_import = $x->query($query);
-            if(!$to_import->length) {
+            
+            if(!$to_import->length)
+            {
                 error_log('selector "'.$query.'" in '.$this->path.' for '.
                     $fn.' did not match any nodes');
                 exit(1);
             }
-            foreach($to_import as $node) {
+            
+            foreach($to_import as $node)
+            {
                 $node = $req->ownerDocument->importNode($node,true);
                 $req->parentNode->insertBefore($node,$req);
             }
+            
             $req->parentNode->removeChild($req);
         }
     }
