@@ -2,7 +2,7 @@
     namespace Fragmentify;
     use Fragmentify,Args,DOMDocument,DOMXPath;
     
-    class PackageViewer implements \rocketsled\Runnable
+    class PackageViewer implements \RocketSled\Runnable
     {
         public function run()
         {
