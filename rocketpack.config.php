@@ -1,11 +1,11 @@
 <?php
     //note the second argument here is major, minor, patch
     //versions
-    rocketpack\Install::package('Fragmentify',array(0,1,1));
+    rocketpack\Install::package('https://github.com/iaindooley/Fragmentify',array(0,2,0));
 
     rocketpack\Dependencies::register(function()
     {
-        rocketpack\Dependency::forPackage('Fragmentify')
-        ->add('Args',array(0,1,2))
+        rocketpack\Dependency::forPackage('https://github.com/iaindooley/Fragmentify')
+        ->add('https://github.com/iaindooley/Args',array(0,2,0))
         ->verify();
     });

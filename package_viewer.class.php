@@ -1,5 +1,5 @@
 <?php
-    namespace fragmentify;
+    namespace Fragmentify;
     use Fragmentify,Args,DOMDocument,DOMXPath;
     
     class PackageViewer implements \rocketsled\Runnable
