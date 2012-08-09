@@ -10,8 +10,7 @@
         private $xpath = null;
         private $base_xpath = null;
 
-        private function __construct($path)
-        {
+        private function __construct($path) {
             assert(is_string($path));
             $this->path = $path;
         }
@@ -24,20 +23,20 @@
             return $this->processed;
         }
 
-        public function process()
-        {
+        public function process() {
             $x = $this->getXPath();
             $html = $this->getHtml();
             
-            if($html)
+            if($html) {
                 $base = $html->getAttribute('base');
-            else
+            }
+            else {
                 $base = '';
+            }
 
             $reqs = $x->query('//*[@require]');
             
-            if($base !== '')
-            {
+            if($base !== '') {
                 $fn = realpath(dirname($this->path).'/'.$base);
                 $this->createBaseDoc(new Fragmentify($fn));
                 $this->populateBaseDoc();
@@ -49,9 +48,10 @@
                 //$rootdir = realpath('./src');
                 $rootdir = dirname($this->path);
                 
-                foreach($reqs as $req)
+                foreach($reqs as $req) {
                     //$this->processRequire($rootdir,$req,$processed);
                     $this->processRequire($rootdir,$req);
+                }
             }
         }
 
@@ -244,13 +244,13 @@
             }
         }
 
-        public function processRequire($rootdir, $req)
-        {
+        public function processRequire($rootdir, $req) {
             $fn = $rootdir.'/'.$req->getAttribute('require');
             $query = $req->getAttribute('xpath');
             
-            if($query === '')
+            if($query === '') {
                 $query = '//fragment/node()';
+            }
            
             $f = new Fragmentify($fn);
             $x = $f->getXPath();
@@ -259,20 +259,19 @@
 
             $subrootdir = dirname($f->path);
 
-            foreach($reqs as $subreq)
+            foreach($reqs as $subreq) {
                 $f->processRequire($subrootdir,$subreq);
+            }
 
             $to_import = $x->query($query);
             
-            if(!$to_import->length)
-            {
+            if(!$to_import->length) {
                 error_log('selector "'.$query.'" in '.$this->path.' for '.
                     $fn.' did not match any nodes');
                 exit(1);
             }
             
-            foreach($to_import as $node)
-            {
+            foreach($to_import as $node) {
                 $node = $req->ownerDocument->importNode($node,true);
                 $req->parentNode->insertBefore($node,$req);
             }
