@@ -13,6 +13,7 @@
         private function __construct($path) {
             assert(is_string($path));
             $this->path = $path;
+            $this->doctype = null;
         }
 
         public function getPath() {
@@ -34,24 +35,18 @@
                 $base = '';
             }
 
-            $reqs = $x->query('//*[@require]');
-            
-            if($base !== '') {
+            if($base === '') {
+                $this->processRequires($this->doc->documentElement,
+                    dirname($this->path));
+            }
+            else {
                 $fn = realpath(dirname($this->path).'/'.$base);
-                $this->createBaseDoc(new Fragmentify($fn));
+                $base = new Fragmentify($fn);
+                $this->createBaseDoc($base);
                 $this->populateBaseDoc();
-                $x = $this->getXPath();
-                $reqs = $x->query('//*[@require]');
-                
-                //hacking this in here because its not getting passed in as an
-                //arg any more
-                //$rootdir = realpath('./src');
-                $rootdir = dirname($this->path);
-                
-                foreach($reqs as $req) {
-                    //$this->processRequire($rootdir,$req,$processed);
-                    $this->processRequire($rootdir,$req);
-                }
+                $this->processRequires($this->base_doc->documentElement,
+                    dirname($fn));
+                $this->doctype = $base->doctype;
             }
         }
 
@@ -75,6 +70,7 @@
                             }
                         }
                         $t->parentNode->removeChild($t);
+                        $this->processRequires($i);
                     }
                 }
                 else if($xp = $node->getAttribute('append')) {
@@ -83,6 +79,7 @@
                         $i = $this->base_doc->importNode($node, true);
                         $i->removeAttribute('append');
                         $t->appendChild($i);
+                        $this->processRequires($i);
                     }
                 }
                 else if($xp = $node->getAttribute('prepend')) {
@@ -96,6 +93,7 @@
                         else {
                             $t->appendChild($i);
                         }
+                        $this->processRequires($i);
                     }
                 }
                 else if($xp = $node->getAttribute('before')) {
@@ -104,6 +102,7 @@
                         $i = $this->base_doc->importNode($node, true);
                         $i->removeAttribute('before');
                         $t->parentNode->insertBefore($i,$t);
+                        $this->processRequires($i);
                     }
                 }
                 else if($xp = $node->getAttribute('after')) {
@@ -117,6 +116,7 @@
                         else {
                             $t->parentNode->append($i);
                         }
+                        $this->processRequires($i);
                     }
                 }
                 else if($xp = $node->getAttribute('surround')) {
@@ -140,6 +140,7 @@
                                 $i->appendChild($t);
                                 break;
                         }
+                        $this->processRequires($i);
                     }
                 }
                 else if($xp = $node->getAttribute('merge')) {
@@ -186,10 +187,17 @@
             $this->base_xpath = new DomXPath($this->base_doc);
         }
 
+        private function stripDoctype($m){
+            $this->doctype = $m[1];
+            return '';
+        }
+
         public function getDoc() {
             if($this->doc == null) {
                 $this->doc = new DomDocument();
                 $data = file_get_contents($this->path);
+                $data = preg_replace_callback('/<!doctype([^>]*)>/',
+                    'self::stripDoctype', $data);
                 $this->doc->loadXML($data);
             }
             return $this->doc;
@@ -230,12 +238,17 @@
                 $ret = $f->getDoc()->saveXML($f->getDoc()->documentElement,
                     LIBXML_NOEMPTYTAG);
             }
+            if($f->doctype) {
+                $ret = '<!doctype'.$f->doctype.'>'.PHP_EOL.$ret;
+            }
             return $ret;
         }
 
         public function getDocumentElement() {
             //assert($this->processed);
-            $this->process();
+            if(!$this->processed) {
+                $this->process();
+            }
             if($this->base_doc) {
                 return $this->base_doc->documentElement;
             }
@@ -244,23 +257,37 @@
             }
         }
 
-        public function processRequire($rootdir, $req) {
-            $fn = $rootdir.'/'.$req->getAttribute('require');
-            $query = $req->getAttribute('xpath');
+        private function processRequires($node, $path=null) {
+            if($path == null) {
+                $path = dirname($this->path);
+            }
+            if($node->getAttribute('require')) {
+                $this->processRequire($node, $path);
+            }
+            $x = $this->getXPath();
+            foreach($x->query('.//*[@require]', $node) as $sub) {
+                $this->processRequire($sub, $path);
+            }
+        }
+
+        public function processRequire($node, $dir) {
+            $fn = $dir.'/'.$node->getAttribute('require');
+            $query = $node->getAttribute('xpath');
             
             if($query === '') {
                 $query = '//fragment/node()';
             }
            
             $f = new Fragmentify($fn);
+            $f->process();
             $x = $f->getXPath();
 
             $reqs = $x->query('//*[@require]');
 
-            $subrootdir = dirname($f->path);
+            $subdir = dirname($f->path);
 
-            foreach($reqs as $subreq) {
-                $f->processRequire($subrootdir,$subreq);
+            foreach($reqs as $sub) {
+                $f->processRequire($sub, $subdir);
             }
 
             $to_import = $x->query($query);
@@ -271,11 +298,11 @@
                 exit(1);
             }
             
-            foreach($to_import as $node) {
-                $node = $req->ownerDocument->importNode($node,true);
-                $req->parentNode->insertBefore($node,$req);
+            foreach($to_import as $import) {
+                $import = $node->ownerDocument->importNode($import,true);
+                $node->parentNode->insertBefore($import,$node);
             }
             
-            $req->parentNode->removeChild($req);
+            $node->parentNode->removeChild($node);
         }
     }
