@@ -223,15 +223,13 @@
             $f->process();
             
             if($f->base_doc) {
-                $ret = $f->base_doc->saveXML($f->base_doc,LIBXML_NOEMPTYTAG);
+                $ret = $f->base_doc->saveXML($f->base_doc->documentElement, 
+                    LIBXML_NOEMPTYTAG);
             }
             else {
-                $ret = $f->getDoc()->saveXML($f->getDoc(),LIBXML_NOEMPTYTAG);
+                $ret = $f->getDoc()->saveXML($f->getDoc()->documentElement,
+                    LIBXML_NOEMPTYTAG);
             }
-            /*
-            <?xml version="1.0" encoding="UTF-8"?>
-            */
-            $ret = preg_replace('/<\?xml[^?]*\?>/','',$ret);
             return $ret;
         }
 
