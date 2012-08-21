@@ -165,13 +165,14 @@
         private function getTargets($xpath) {
             $t = $this->base_xpath->query($xpath);
             if(!$t->length) {
-                error_log('selector "'.$xpath.'" did not match anything in '.
+                $this->error('selector "'.$xpath.
+                    '" did not match anything in base template '.
                     $this->getHtml()->getAttribute('base'));
                 exit(1);
             }
             foreach($t as $node) {
                 if(!$node->parentNode) {
-                    error_log('cannot manipulate root node (selector was "'.
+                    $this->error('cannot manipulate root node (selector was "'.
                         $xpath.'")');
                     exit(1);
                 }
@@ -293,8 +294,7 @@
             $to_import = $x->query($query);
             
             if(!$to_import->length) {
-                error_log('selector "'.$query.'" in '.$this->path.' for '.
-                    $fn.' did not match any nodes');
+                $this->error('selector "'.$query.'" did not match any nodes in required file '.$fn);
                 exit(1);
             }
             
@@ -304,5 +304,9 @@
             }
             
             $node->parentNode->removeChild($node);
+        }
+
+        private function error($msg) {
+            error_log('while processing '.$this->path.':'.PHP_EOL.$msg);
         }
     }
